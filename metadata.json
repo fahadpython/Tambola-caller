@@ -1,0 +1,6 @@
+{
+  "name": "Tambola Caller",
+  "description": "A Tambola (Bingo) number caller with auto-calling, custom timings, speech announcements, themes, and predefined number sequences.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
