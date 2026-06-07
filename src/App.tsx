@@ -15,7 +15,7 @@ export default function App() {
     voiceEnabled: true,
   });
 
-  const { gameState, callNextNumber, togglePlayPause, resetGame } = useTambola(settings);
+  const { gameState, callNextNumber, togglePlayPause, resetGame, injectNextNumber } = useTambola(settings);
 
   const mainBg = settings.theme === 'neon' ? 'bg-black min-h-screen' 
                : settings.theme === 'dark' ? 'bg-gray-900 min-h-screen text-gray-100' 
@@ -71,6 +71,7 @@ export default function App() {
               onUpdate={setSettings}
               // disable predefined number changes once the game has started calling them
               disabled={gameState.calledNumbers.length > 0} 
+              onInjectNextNumber={injectNextNumber}
             />
 
             {/* Stats Card */}

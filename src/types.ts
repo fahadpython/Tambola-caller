@@ -13,4 +13,5 @@ export interface GameState {
   currentNumber: number | null;
   isPlaying: boolean;
   isFinished: boolean;
+  forcedNextNumber?: number;
 }

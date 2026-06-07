@@ -33,13 +33,17 @@ export function useTambola(settings: GameSettings) {
 
       let nextNum: number | undefined;
 
+      if (prev.forcedNextNumber !== undefined && uncalledNumbers.includes(prev.forcedNextNumber)) {
+        nextNum = prev.forcedNextNumber;
+      }
+
       // Check if we need to call from predefined sequence first
-      const sequenceIndex = prev.calledNumbers.length;
-      if (sequenceIndex < settings.predefinedNumbers.length) {
-        const potentialNext = settings.predefinedNumbers[sequenceIndex];
-        // Ensure the predefined number is valid and hasn't been called (in case of duplicates)
-        if (uncalledNumbers.includes(potentialNext)) {
-          nextNum = potentialNext;
+      if (nextNum === undefined) {
+        for (const num of settings.predefinedNumbers) {
+          if (uncalledNumbers.includes(num)) {
+            nextNum = num;
+            break;
+          }
         }
       }
 
@@ -56,6 +60,7 @@ export function useTambola(settings: GameSettings) {
         calledNumbers: [...prev.calledNumbers, nextNum],
         currentNumber: nextNum,
         isFinished: uncalledNumbers.length === 1,
+        forcedNextNumber: undefined,
       };
     });
   }, [settings.predefinedNumbers, speak]);
@@ -81,6 +86,10 @@ export function useTambola(settings: GameSettings) {
     window.speechSynthesis.cancel();
   }, []);
 
+  const injectNextNumber = useCallback((num: number) => {
+    setGameState((prev) => ({ ...prev, forcedNextNumber: num }));
+  }, []);
+
   useEffect(() => {
     if (gameState.isPlaying && !gameState.isFinished) {
       timerRef.current = window.setInterval(callNextNumber, settings.intervalSec * 1000);
@@ -100,5 +109,6 @@ export function useTambola(settings: GameSettings) {
     callNextNumber,
     togglePlayPause,
     resetGame,
+    injectNextNumber,
   };
 }
