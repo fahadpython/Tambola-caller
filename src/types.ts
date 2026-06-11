@@ -4,6 +4,7 @@ export interface GameSettings {
   theme: Theme;
   intervalSec: number;
   predefinedNumbers: number[];
+  ocrNumbers: number[];
   voiceEnabled: boolean;
 }
 

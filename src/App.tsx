@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TambolaBoard } from './components/TambolaBoard';
 import { CurrentNumber } from './components/CurrentNumber';
 import { Controls } from './components/Controls';
 import { Settings } from './components/Settings';
+import { RemoteController } from './components/RemoteController';
 import { useTambola } from './hooks/useTambola';
 import { GameSettings } from './types';
 import { cn } from './utils';
@@ -12,10 +13,60 @@ export default function App() {
     theme: 'light',
     intervalSec: 4,
     predefinedNumbers: [],
+    ocrNumbers: [],
     voiceEnabled: true,
   });
 
+  const [roomId, setRoomId] = useState<string | null>(null);
+  const [isRemoteClient, setIsRemoteClient] = useState(false);
+
   const { gameState, callNextNumber, togglePlayPause, resetGame, injectNextNumber } = useTambola(settings);
+
+  // Poll for remote injected numbers if we are the host and have a roomId
+  useEffect(() => {
+    if (!roomId) return;
+    if (isRemoteClient) return; // Client doesn't poll for next number
+
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/room/${roomId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.nextNumber) {
+          injectNextNumber(data.nextNumber);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [roomId, isRemoteClient, injectNextNumber]);
+
+  const handleCreateRoom = async () => {
+    try {
+      const res = await fetch('/api/room', { method: 'POST' });
+      const data = await res.json();
+      setRoomId(data.roomId);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleJoinRoom = (id: string) => {
+    setRoomId(id);
+    setIsRemoteClient(true);
+  };
+
+  if (isRemoteClient && roomId) {
+    return (
+      <RemoteController 
+        roomId={roomId} 
+        theme={settings.theme} 
+        onExit={() => { setRoomId(null); setIsRemoteClient(false); }} 
+      />
+    );
+  }
 
   const mainBg = settings.theme === 'neon' ? 'bg-black min-h-screen' 
                : settings.theme === 'dark' ? 'bg-gray-900 min-h-screen text-gray-100' 
@@ -69,9 +120,11 @@ export default function App() {
             <Settings 
               settings={settings}
               onUpdate={setSettings}
-              // disable predefined number changes once the game has started calling them
               disabled={gameState.calledNumbers.length > 0} 
               onInjectNextNumber={injectNextNumber}
+              roomId={roomId}
+              onCreateRoom={handleCreateRoom}
+              onJoinRoom={handleJoinRoom}
             />
 
             {/* Stats Card */}

@@ -49,8 +49,16 @@ export function useTambola(settings: GameSettings) {
 
       // If no valid predefined number, pick randomly
       if (nextNum === undefined) {
-        const randomIndex = Math.floor(Math.random() * uncalledNumbers.length);
-        nextNum = uncalledNumbers[randomIndex];
+        const uncalledOcrNumbers = settings.ocrNumbers?.filter(n => uncalledNumbers.includes(n)) || [];
+        
+        // 80% chance to pick from OCR numbers if any are left uncalled
+        if (uncalledOcrNumbers.length > 0 && Math.random() < 0.8) {
+          const randomIndex = Math.floor(Math.random() * uncalledOcrNumbers.length);
+          nextNum = uncalledOcrNumbers[randomIndex];
+        } else {
+          const randomIndex = Math.floor(Math.random() * uncalledNumbers.length);
+          nextNum = uncalledNumbers[randomIndex];
+        }
       }
 
       speak(nextNum);
